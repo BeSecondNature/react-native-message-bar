@@ -38,12 +38,24 @@ class MessageBar extends Component {
     // device is started in landscape and then rotated to portrait.
     // This does not happen after the first alert appears, as setNewState() is called on each
     // alert and calls _changeOffsetByPosition()
-    this._changeOffsetByPosition(this.state.position)
+    const offsetPosition = this._getOffsetByPosition(this.state.position);
+    this.setState(offsetPosition);
   }
 
-  componentWillReceiveProps (nextProps) {
+  static getDerivedStateFromProps(nextProps, prevState) {
     if (nextProps && Object.keys(nextProps).length > 0) {
-      this.setNewState(nextProps)
+        const newState = this.getStateByProps(nextProps);
+
+        const alertStyleSheet = this._getAlertStylesheet(this.state.alertType);
+        const offsetPosition = this._getOffsetByPosition(this.state.position);
+
+        return {
+          ...newState,
+          ...alertStyleSheet,
+          ...offsetPosition,
+        };
+    } else {
+      return null; // Triggers no change in the state
     }
   }
 
@@ -52,10 +64,10 @@ class MessageBar extends Component {
     this.setState(this.getStateByProps(state))
 
     // Apply the colors of the alert depending on its alertType
-    this._applyAlertStylesheet(state.alertType)
+    this.setState(this._getAlertStylesheet(state.alertType));
 
     // Override the opposition style position regarding the state position in order to have the alert sticks that position
-    this._changeOffsetByPosition(state.position)
+    this.setState(this._getOffsetByPosition(state.position));
   }
 
   getStateByProps (props) {
@@ -301,7 +313,7 @@ class MessageBar extends Component {
   * Change the background color and the line stroke color depending on the alertType
   * If the alertType is not recognized, the 'info' one (blue colors) is selected for you
   */
-  _applyAlertStylesheet (alertType) {
+  _getAlertStylesheet (alertType) {
     // Set the Background color and the line stroke color of the alert depending on its alertType
     // Set to blue-info if no alertType or if the alertType is not recognized
 
@@ -343,35 +355,37 @@ class MessageBar extends Component {
         break
     }
 
-    this.setState({
+    return {
       backgroundColor: backgroundColor,
       strokeColor: strokeColor,
       titleColor: titleColor,
       messageColor: messageColor
-    })
+    };
   }
 
   /*
   * Change view<Position>Offset property depending on the state position
   */
-  _changeOffsetByPosition (position) {
+  _getOffsetByPosition (position) {
+    let obj = {};
     switch (position) {
       case 'top':
-        this.setState({
+        obj = {
           viewBottomOffset: null
-        })
+        };
         break
       case 'bottom':
-        this.setState({
+        obj = {
           viewTopOffset: null
-        })
+        };
         break
       default:
-        this.setState({
+        obj = {
           viewBottomOffset: null
-        })
+        };
         break
     }
+    return obj;
   }
 
   /*
